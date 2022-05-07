@@ -1,6 +1,7 @@
 package com.example.callmonitor
 
 import android.Manifest.permission.*
+import android.content.IntentFilter
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Bundle
 import android.util.Log
@@ -21,9 +22,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         requestCallLogPermission()
-
     }
-
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
