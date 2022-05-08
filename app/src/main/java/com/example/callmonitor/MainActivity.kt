@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         if (!isAndroid10AndAbove()) {
             requestCallLogPermission()
-
             // dynamically register CallReceiver
             if (callReceiver == null) {
                 callReceiver = CallReceiver()
