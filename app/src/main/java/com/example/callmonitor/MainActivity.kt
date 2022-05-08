@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
         private const val READ_CALL_LOG_REQUEST_CODE = 0
         private const val READ_PHONE_STATE_REQUEST_CODE = 1
         private const val PROCESS_OUTGOING_CALL_REQUEST_CODE = 2
+        private const val READ_CONTACT_REQUEST_CODE = 3
     }
 
     private var callReceiver: CallReceiver? = null
@@ -31,7 +32,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         if (!isAndroid10AndAbove()) {
             requestCallLogPermission()
-
             // dynamically register CallReceiver
             if (callReceiver == null) {
                 callReceiver = CallReceiver()
@@ -41,6 +41,7 @@ class MainActivity : AppCompatActivity() {
             intentFilter.addAction("android.intent.action.NEW_OUTGOING_CALL")
             registerReceiver(callReceiver, intentFilter)
         } else {
+            requestReadContactPermission()
             requestRole()
         }
     }
@@ -95,6 +96,20 @@ class MainActivity : AppCompatActivity() {
                     ).show()
                 }
             }
+            READ_CONTACT_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PERMISSION_GRANTED) {
+                    // permission granted!
+                    Log.d("###", "READ_CONTACTS granted!")
+                } else {
+                    // permission denied or has been cancelled
+                    Log.d("###", "READ_CONTACTS denied!")
+                    Toast.makeText(
+                        applicationContext,
+                        "missing READ_CONTACTS",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
             else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
     }
@@ -142,6 +157,13 @@ class MainActivity : AppCompatActivity() {
         if (checkSelfPermission(this, READ_CALL_LOG) != PERMISSION_GRANTED) {
             // We do not have this permission. Let's ask the user
             requestPermissions(this, arrayOf(READ_CALL_LOG), READ_CALL_LOG_REQUEST_CODE)
+        }
+    }
+
+    private fun requestReadContactPermission() {
+        if (checkSelfPermission(this, READ_CONTACTS) != PERMISSION_GRANTED) {
+            // We do not have this permission. Let's ask the user
+            requestPermissions(this, arrayOf(READ_CONTACTS), READ_CONTACT_REQUEST_CODE)
         }
     }
 

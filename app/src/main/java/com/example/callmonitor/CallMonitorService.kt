@@ -1,7 +1,9 @@
 package com.example.callmonitor
 
 import android.net.Uri
+import android.os.Build
 import android.telecom.Call
+import android.telecom.Call.Details
 import android.telecom.CallScreeningService
 import android.telephony.PhoneNumberUtils
 import android.util.Log
@@ -17,20 +19,36 @@ class CallMonitorService : CallScreeningService() {
      */
     override fun onScreenCall(callDetails: Call.Details) {
         Log.d("###", callDetails.formattedPhoneNumber)
-        displayToast("call from : ${callDetails.formattedPhoneNumber}")
+        val number = callDetails.formattedPhoneNumber
+        var toastMessage = "Number: $number"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            toastMessage = when (callDetails.callDirection) {
+                Details.DIRECTION_INCOMING -> {
+                    "call from: $number"
+                }
+                Details.DIRECTION_OUTGOING -> {
+                    "call to: $number"
+                }
+                else -> {
+                    "Number: $number"
+                }
+            }
+        }
+        displayToast(toastMessage)
         //displayToast(getPhoneNumber(callDetails))
         respondToCall(callDetails, CallResponse.Builder().build())
     }
 
 
-    private val Call.Details.formattedPhoneNumber: String get() {
-        return when (val phoneNumber = handle?.schemeSpecificPart) {
-            else -> PhoneNumberUtils.formatNumber(
-                phoneNumber,
-                Locale.getDefault().country
-            )
+    private val Call.Details.formattedPhoneNumber: String
+        get() {
+            return when (val phoneNumber = handle?.schemeSpecificPart) {
+                else -> PhoneNumberUtils.formatNumber(
+                    phoneNumber,
+                    Locale.getDefault().country
+                )
+            }
         }
-    }
 
     private fun displayToast(message: String) {
         Toast.makeText(this.applicationContext, message, Toast.LENGTH_LONG).show()
