@@ -1,15 +1,21 @@
 package com.example.callmonitor
 
 import android.Manifest.permission.*
+import android.app.Activity
+import android.app.role.RoleManager
 import android.content.IntentFilter
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat.checkSelfPermission
+
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -18,12 +24,26 @@ class MainActivity : AppCompatActivity() {
         private const val PROCESS_OUTGOING_CALL_REQUEST_CODE = 2
     }
 
+    private var callReceiver: CallReceiver? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        requestCallLogPermission()
-    }
+        if (!isAndroid10AndAbove()) {
+            requestCallLogPermission()
 
+            // dynamically register CallReceiver
+            if (callReceiver == null) {
+                callReceiver = CallReceiver()
+            }
+            val intentFilter = IntentFilter()
+            intentFilter.addAction("android.intent.action.PHONE_STATE")
+            intentFilter.addAction("android.intent.action.NEW_OUTGOING_CALL")
+            registerReceiver(callReceiver, intentFilter)
+        } else {
+            requestRole()
+        }
+    }
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -79,6 +99,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        // manually unregister CallReceiver
+        if (callReceiver != null) {
+            unregisterReceiver(callReceiver)
+            callReceiver = null
+        }
+    }
+
     private fun requestProcessOutGoingCallPermission() {
         if (checkSelfPermission(this, PROCESS_OUTGOING_CALLS) != PERMISSION_GRANTED) {
             // We do not have this permission. Let's ask the user
@@ -115,4 +144,24 @@ class MainActivity : AppCompatActivity() {
             requestPermissions(this, arrayOf(READ_CALL_LOG), READ_CALL_LOG_REQUEST_CODE)
         }
     }
+
+    private fun requestRole() {
+        if (isAndroid10AndAbove()) {
+            val roleManager = getSystemService(ROLE_SERVICE) as RoleManager
+            val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING)
+
+            val startForResult = registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) { result: ActivityResult ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    //  you will get result here in result.data
+                    Log.d("###", "Role was granted")
+                }
+            }
+            startForResult.launch(intent)
+        }
+    }
+
+    private fun isAndroid10AndAbove() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
 }

@@ -23,13 +23,23 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".CallReceiver"
+        <!-- Static registering call receiver -->
+        <!--<receiver android:name=".CallReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE"/>
                 <action android:name="android.intent.action.NEW_OUTGOING_CALL"/>
             </intent-filter>
-        </receiver>
+        </receiver>-->
+
+        <service
+            android:name=".CallMonitorService"
+            android:permission="android.permission.BIND_SCREENING_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
